@@ -24,7 +24,9 @@ services:
       - ${PWD}/mysql/config:/etc/mysql/conf.d
       - ${PWD}/mysql/data:/var/lib/mysql
       - ${PWD}/mysql/logs:/var/log/mysql
-      - ${PWD}/mysql/init:/docker-entrypoint-initdb.d
+      - ${PWD}/nacos/init/nacos.sql:/docker-entrypoint-initdb.d/nacos.sql
+      - ${PWD}/xxl-job/init/xxl-job.sql:/docker-entrypoint-initdb.d/xxl-job.sql
+      - ${PWD}/seata-server/init/seata-server.sql:/docker-entrypoint-initdb.d/seata-server.sql
     ports:
       - "3306:3306"
     restart: "no"

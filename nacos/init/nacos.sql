@@ -2,11 +2,6 @@
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
--- 创建nfturbo用户并授权
-CREATE USER IF NOT EXISTS 'nfturbo'@'%' IDENTIFIED BY 'NFTurbo666';
-GRANT ALL PRIVILEGES ON *.* TO 'nfturbo'@'%' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
 -- 创建nacos-mysql数据库
 CREATE DATABASE IF NOT EXISTS `nacos-mysql` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -281,8 +276,8 @@ store.db.datasource=druid
 store.db.dbType=mysql
 store.db.driverClassName=com.mysql.cj.jdbc.Driver
 store.db.url=jdbc:mysql://mysql:3306/seata-server?useUnicode=true&characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
-store.db.user=nfturbo
-store.db.password=NFTurbo666
+store.db.user=root
+store.db.password=123456
 # Initial database connection count
 store.db.minConn=1
 # Maximum database connection count
