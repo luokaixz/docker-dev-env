@@ -1,0 +1,266 @@
+version: '3.8'
+
+networks:
+  eth0:
+    name: eth0
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:8.4.1
+    container_name: mysql-8
+    deploy:
+      resources:
+        limits:
+          memory: 256M    # 硬上限 256MB
+        reservations:
+          memory: 128M    # 预留 128MB
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_HOST: '%'
+      TZ: Asia/Shanghai
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+      MYSQL_INNODB_BUFFER_POOL_SIZE: 16M
+    volumes:
+      - ${PWD}/mysql/config:/etc/mysql/conf.d
+      - ${PWD}/mysql/data:/var/lib/mysql
+      - ${PWD}/mysql/logs:/var/log/mysql
+      - ${PWD}/mysql/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    networks:
+      - eth0
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: "no"
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${PWD}/redis/config/redis.conf:/usr/local/etc/redis/redis.conf:rw
+      - ${PWD}/redis/data:/data:rw
+      - ${PWD}/redis/logs:/var/log/redis:rw
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - eth0
+
+  nacos:
+    image: nacos/nacos-server:v2.5.1
+    container_name: nacos
+    env_file:
+      - ${PWD}/nacos/env/nacos-standlone-mysql.env
+    environment:
+      JVM_OPTS: "-Xms128m -Xmx128m"
+    volumes:
+      - ${PWD}/nacos/logs:/home/nacos/logs
+      - ${PWD}/nacos/conf:/home/nacos/conf
+      - ${PWD}/nacos/data:/home/nacos/data
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - eth0
+
+  namesrv:
+    image: apache/rocketmq:5.2.0
+    container_name: rmqnamesrv
+    environment:
+      JAVA_OPT_EXT: "-Xms128m -Xmx128m"
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv -n namesrv:9876
+    restart: "no"
+    volumes:
+      - ${PWD}/rocketmq/namesrv/logs:/home/rocketmq/logs
+      - ${PWD}/rocketmq/namesrv/config:/home/rocketmq/conf
+    networks:
+      - eth0
+
+  broker:
+    image: apache/rocketmq:5.2.0
+    container_name: rmqbroker
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m"
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    volumes:
+      - ${PWD}/rocketmq/broker/conf:/home/rocketmq/conf
+      - ${PWD}/rocketmq/broker/logs:/home/rocketmq/logs
+      - ${PWD}/rocketmq/broker/store:/home/rocketmq/store
+    command: sh mqbroker -n namesrv:9876 -c /home/rocketmq/conf/broker.conf
+    depends_on:
+      - namesrv
+    restart: "no"
+    networks:
+      - eth0
+
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:2.0.0
+    container_name: rocketmq-dashboard
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx128m -Drocketmq.namesrv.addr=namesrv:9876"
+    ports:
+      - "8080:8080"
+    restart: "no"
+    depends_on:
+      - namesrv
+      - broker
+    volumes:
+      - ${PWD}/rocketmq-dashboard/application.properties:/application.properties
+      - ${PWD}/rocketmq-dashboard/config:/config
+      - ${PWD}/rocketmq-dashboard/logs:/root/logs
+      - ${PWD}/rocketmq-dashboard/data:/root/data
+    networks:
+      - eth0
+
+  xxl-job:
+    image: xuxueli/xxl-job-admin:2.4.1
+    container_name: xxl-job
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx128m"
+    volumes:
+      - ${PWD}/xxl-job/application.properties:/application.properties
+      - ${PWD}/xxl-job/config:/config
+      - ${PWD}/xxl-job/logs:/data/applogs
+    ports:
+      - "8082:8080"
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - eth0
+
+  seata-server:
+    image: seataio/seata-server:2.0.0
+    container_name: seata-server
+    environment:
+      STORE_MODE: db
+      SEATA_IP: host.docker.internal
+      SEATA_PORT: 8091
+      JAVA_OPTS: "-Xms128m -Xmx128m -Dseata.store.mode=db"
+    volumes:
+      - ${PWD}/seata-server/resources/application.yml:/seata-server/application.yml
+      - ${PWD}/seata-server/resources/logback-spring.xml:/seata-server/logback-spring.xml
+      - ${PWD}/seata-server/logs:/root/logs/seata
+      - ${PWD}/seata-server/data:/seata-server/data
+    ports:
+      - "7091:7091"
+      - "8091:8091"
+    restart: "no"
+    networks:
+      - eth0
+
+  minio-server:
+    image: minio/minio:latest
+    container_name: minio-server
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - ${PWD}/minio/data:/data
+      - ${PWD}/minio/config:/root/.minio
+      - ${PWD}/minio/logs:/var/log/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    restart: "no"
+    networks:
+      - eth0
+
+  neo4j:
+    image: neo4j:5.22-community
+    container_name: neo4j
+    environment:
+      NEO4J_AUTH: neo4j/neo4j666
+      NEO4JLABS_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_initial__size: "128m"
+      NEO4J_dbms_memory_heap_max__size: "128m"
+    volumes:
+      - ${PWD}/neo4j/data:/data
+      - ${PWD}/neo4j/logs:/logs
+      - ${PWD}/neo4j/conf:/conf
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    restart: "no"
+    networks:
+      - eth0
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.14
+    container_name: elasticsearch
+    environment:
+      - node.name=es-node-1
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ${PWD}/elasticsearch/config:/usr/share/elasticsearch/config
+      - ${PWD}/elasticsearch/data:/usr/share/elasticsearch/data
+      - ${PWD}/elasticsearch/plugins:/usr/share/elasticsearch/plugins
+      - ${PWD}/elasticsearch/logs:/usr/share/elasticsearch/logs
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    restart: "no"
+    networks:
+      - eth0
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.19.14
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+    ports:
+      - "5601:5601"
+    restart: "no"
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ${PWD}/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+      - ${PWD}/kibana/logs:/usr/share/kibana/logs
+    networks:
+      - eth0
+
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:1.8.8
+    container_name: sentinel-dashboard
+    restart: "no"
+    ports:
+      - "8858:8858"
+    environment:
+      - TZ=Asia/Shanghai
+      - JAVA_OPTS=-Dserver.port=8858 -Dcsp.sentinel.dashboard.server=localhost:8858 -Dproject.name=sentinel-dashboard
+    volumes:
+      - ${PWD}/sentinel/application.properties:/application.properties
+      - ${PWD}/sentinel/config:/root/config
+      - ${PWD}/sentinel/logs:/root/logs/csp
+      - ${PWD}/sentinel/data:/root/data
+    networks:
+      - eth0

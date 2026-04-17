@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_HOME" value="${NACOS_LOG_HOME:-/home/nacos/logs}" />
+    <property name="LOG_LEVEL" value="${NACOS_LOG_LEVEL:-INFO}" />
+    <property name="LOG_BASE" value="${NACOS_LOG_BASE:-/home/nacos/logs}" />
+    
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%t] [%c] - %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="NACOS_ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/nacos_access.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/nacos_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%t] [%c] - %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="NACOS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/nacos.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/nacos.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%t] [%c] - %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="${LOG_LEVEL}"/>
+        <appender-ref ref="NACOS"/>
+    </root>
+
+    <logger name="com.alibaba.nacos" additivity="false">
+        <level value="${LOG_LEVEL}"/>
+        <appender-ref ref="NACOS"/>
+    </logger>
+
+    <logger name="org.springframework" additivity="false">
+        <level value="${LOG_LEVEL}"/>
+        <appender-ref ref="NACOS"/>
+    </logger>
+
+    <logger name="com.alibaba.nacos.config.server.service.accesslog" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="NACOS_ACCESS"/>
+    </logger>
+</configuration>

@@ -1,0 +1,78 @@
+# 忽略所有目录下的数据、日志、临时文件（多级递归）
+**/data/
+**/logs/
+**/tmp/
+**/temp/
+**/storage/
+**/uploads/
+
+# 忽略所有常见的日志文件
+**/*.log
+**/*.pid
+**/*.socket
+
+# 忽略运行时的生成文件
+**/*.lock
+**/*.pid
+**/*.socket
+
+# 忽略环境变量文件（如果包含敏感信息）
+**/.env
+**/*.env
+
+# 忽略 Docker 运行时产生的临时文件
+**/docker-compose.override.yml
+**/.dockerignore
+
+# 忽略操作系统生成的垃圾文件
+**/Thumbs.db
+**/.DS_Store
+
+# 忽略 IDE 配置文件（可选）
+**/.vscode/
+**/.idea/
+**/*.swp
+
+# 忽略 MySQL、PostgreSQL 等数据库的本地数据文件
+**/*.ibd
+**/*.frm
+**/*.myi
+**/*.myd
+
+# 忽略 Elasticsearch 数据目录
+**/elasticsearch/data/**/*
+
+# 忽略 Redis 持久化文件
+**/*.rdb
+**/*.aof
+
+# 忽略 RocketMQ 存储文件
+**/rocketmq/broker/store/**/*
+
+# 忽略 MinIO 数据
+**/minio/data/**/*
+
+# 忽略 Neo4j 数据
+**/neo4j/data/**/*
+
+# 忽略 Seata 数据
+**/seata-server/data/**/*
+
+# 忽略 Nacos 数据（但保留配置）
+**/nacos/data/**/*
+**/nacos/logs/**/*
+
+# 忽略 xxl-job 日志
+**/xxl-job/logs/**/*
+
+# 忽略 Sentinel 数据
+**/sentinel/data/**/*
+**/sentinel/logs/**/*
+
+# 忽略 Kibana 日志
+**/kibana/logs/**/*
+
+# 忽略任何目录下的 config 子目录中的敏感文件（但保留配置模板）
+**/config/*.secret
+**/config/*.key
+**/config/*.pem

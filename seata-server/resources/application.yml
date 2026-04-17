@@ -1,0 +1,43 @@
+server:
+  port: 7091
+
+spring:
+  application:
+    name: seata-server
+
+logging:
+  config: classpath:logback-spring.xml
+  file:
+    path: /root/logs/seata
+
+console:
+  user:
+    username: seata
+    password: seata
+
+seata:
+  # 暂时使用本地文件配置，不从 Nacos 读取
+  config:
+    type: file
+  registry:
+    type: file
+  store:
+    mode: db
+    session:
+      mode: db
+    lock:
+      mode: db
+    db:
+      datasource: druid
+      db-type: mysql                    # 关键：必须明确写 mysql
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://mysql:3306/seata-server?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      user: root
+      password: 123456
+      min-conn: 1
+      max-conn: 10
+      global-table: global_table
+      branch-table: branch_table
+      lock-table: lock_table
+      distributed-lock-table: distributed_lock
+      query-limit: 1000

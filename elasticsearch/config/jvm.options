@@ -1,0 +1,15 @@
+# 设置JVM堆内存大小（初始值与最大值，通常设置为相同值）
+-Xms128m
+-Xmx128m
+
+# 开启GC日志记录（默认路径在logs目录下）
+# 日志文件大小限制与轮转策略
+8-13:-XX:+UseG1GC
+8-13:-XX:G1ReservePercent=25
+8-13:-XX:InitiatingHeapOccupancyPercent=30
+
+# 堆内存溢出时生成dump文件，便于问题排查
+-XX:+HeapDumpOnOutOfMemoryError
+
+# DNS缓存配置
+-Dnetworkaddress.cache.ttl=60
